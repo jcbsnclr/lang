@@ -1,0 +1,32 @@
+import http;
+
+# define a command 'greet', that takes one argument 'name'
+def greet name {
+	# curly braces are "batches" a list of commands
+	# square brackets are "inline batches", similar to batches except evaluated when they are encountered rather than producing a value
+	#
+	# explicit return is used here for clarity, however the intention is that the result of the last command in a batch is it's return value when evaluated
+	# if the final statement is followed by a semicolon, then an empty command is inserted at the end of the batch, returning no value
+
+	# arguments to commands are separated by whitespace
+	return [cat "Hello, " name "!"];
+};
+
+# http.server is a command that takes in a batch as an argument
+#
+# the rough idea here is that, eventually, I'd like to allow for the caller of a batch to control it's environment
+# in this example, the http.server command will define a `port` and `route` command that is exposed to the environment
+# the batch runs in
+http.server {
+	port 1234;
+
+	route "/" {
+		return "Hello! Please go to '/hello/<name>'";
+	};
+
+	# here is another example of a command controlling the environment of a batch. in this example, the route command will
+	# parse the URL field and extract the name part, and put it in a variable called "name" for the batch
+	route "/hello/<name>" {
+		return [greet name];
+	};
+};
