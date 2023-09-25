@@ -1,0 +1,38 @@
+import http;
+
+let numbers [array 1 2 3 4 5];
+
+# 2 4 6 8 10
+for number: numbers do: {
+  echo number;
+};
+
+for numbers apply: double;
+
+import std::hashmap;
+
+def map {
+  var map [hashmap::empty];
+
+  for pair: $pairs do: {
+    map.insert pair.key pair.value;
+  }
+
+  return map;
+};
+
+let people [map 
+  John: 18
+  James: 53
+  Jacob: 23
+];
+
+def foo .. {
+  for pair: $pairs do: {
+    if [eq pair.key "bar " ] then: {
+      echo pair.value;
+    };
+  };
+};
+
+foo bar: "Hello, World!";

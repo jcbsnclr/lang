@@ -1,0 +1,22 @@
+# define a command "can_drink" that takes in one argument "age"
+def can_drink age {
+  gteq age 18
+};
+
+let name [prompt "What is your name?"];
+
+# commands are varadic; `echo` will concat all args before printing 
+echo "Hello, " name "!";
+
+# we pipe the result of `prompt` into `parse_int`, binding it's return value to `$` 
+# 
+# the last command of a batch determines it's return value; if a semicolon is seen
+# at the end of a batch, then an empty command (returning `None`) is appended to the batch
+let age [prompt "What is your age?" | parse_int $];
+
+# the `key: value` syntax is called a "pair", and is how we specify the `then` and `else` branches of the if command
+if [can_drink age] then: {
+  echo "You are unable to buy alcohol";
+} else: {
+  echo "You can buy alcohol";
+};

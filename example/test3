@@ -1,0 +1,5 @@
+let x 10;
+
+if [lt x 20] {
+	echo hello world;
+}

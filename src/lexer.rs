@@ -10,15 +10,15 @@ pub struct Span {
 }
 
 impl Span {
-    fn new(start: usize, end: usize) -> Span {
+    pub fn new(start: usize, end: usize) -> Span {
         Span { start, end }
     }
 
-    fn starting_at(start: usize) -> Span {
+    pub fn starting_at(start: usize) -> Span {
         Span::new(start, start + 1)
     }
 
-    fn extend_to(&mut self, pos: usize) {
+    pub fn extend_to(&mut self, pos: usize) {
         self.end = pos + 1;
     }
 
@@ -57,15 +57,16 @@ pub enum TokenKind {
 
     Identifier,
     Integer,
+    String,
 
     Unknown(char),
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct Token<'a> {
-    kind: TokenKind,
-    span: Span,
-    view: &'a str,
+    pub kind: TokenKind,
+    pub span: Span,
+    pub view: &'a str,
 }
 
 impl<'a> Token<'a> {
@@ -131,6 +132,28 @@ impl<'a> Lexer<'a> {
 
         Some(self.produce_token(kind, span))
     }
+
+    pub fn resolve_line_col(&self, span: Span) -> (usize, usize) {
+        let (mut line, mut col) = (1, 1);
+
+        let iter = self
+            .source()
+            .char_indices()
+            .filter_map(|(index, c)| (index < span.start()).then_some(c));
+
+        for c in iter {
+            match c {
+                '\n' => {
+                    line += 1;
+                    col = 1;
+                }
+
+                _ => col += 1,
+            }
+        }
+
+        (line, col)
+    }
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -152,6 +175,8 @@ impl<'a> Iterator for Lexer<'a> {
             '0'..='9' => self.produce_while(TokenKind::Integer, |c| matches!(c, '0'..='9')),
 
             '#' => self.produce_while(TokenKind::Comment, |c| c != '\n'),
+
+            '"' => self.produce_string(),
 
             _ => self.produce_punctuation(),
         };
@@ -179,6 +204,30 @@ impl<'a> Lexer<'a> {
         };
 
         Some(self.produce_token(kind, span))
+    }
+
+    fn produce_string(&mut self) -> Option<Token<'a>> {
+        let (start, _) = self.stream.next()?;
+        let mut span = Span::starting_at(start);
+
+        while let Some((pos, c)) = self.stream.next() {
+            // extend token to current char
+            span.extend_to(pos);
+
+            if c == '\\' {
+                // escape sequence; skip next char
+                if let Some((pos, _)) = self.stream.next() {
+                    // extend token to skipped char
+                    span.extend_to(pos);
+                }
+            } else if c == '"' {
+                // end quote
+                break;
+            }
+        }
+
+        // produce string literal token
+        Some(self.produce_token(TokenKind::String, span))
     }
 }
 
